@@ -1,6 +1,9 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 
+var knowledgebaseID = "11a4bd05-95de-4e9d-9f53-558d0157d3d3"; 
+var qnaSubscriptionKey = "0055fb6f6944458695b1b633d6f9ce44";
+
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 // Setup Restify Server
@@ -12,27 +15,76 @@ var connector = new builder.ChatConnector({
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 
-server.listen(process.env.port || process.env.PORT || 3978, function () {
+server.listen(process.env.PORT || 3978, function () {
    console.log('%s listening to %s', server.name, server.url); 
 });
 
-// Listen for messages from users 
-server.post('/api/messages', connector.listen());
+server.post('/api/messages', connector.listen()); // Listen for messages from users 
+
+// =========== CONFIG END ================
+
+var bot = new builder.UniversalBot(connector);
 
 
-// Receive messages from the user and respond by echoing each message back (prefixed with 'You said:')
-var bot = new builder.UniversalBot(connector, function (session) {
-	sendTextToQnA(session.message.text, session);
-    //session.send("You said: %s", session.message.text);
-});
+bot.dialog('/', [
+	function (session, args){
+		if (args && args.repromt){
+			builder.Prompts.text(session, 'What else can i do for you?');
+		}
+		else{
+			builder.Prompts.text(session, 'Hello... What\'s your name?');
+		}
+	},
+	function (session, results) {
+		session.userData.name = results.response;	
+		session.beginDialog('/maindialog');
+	},
+	function (session, results) {
+		if (results == 'end') {
+			session.send("Bye!");
+			session.endConversation();
+		}
+		else{
+			session.replaceDialog('/', {repromt: true});
+		}
+	}
+]);
 
+bot.dialog('/maindialog', [
+    function (session) {   
+        builder.Prompts.choice(session, 'Hello '+ session.userData.name + ', how may I help you?', ['wifi', 'coffee', 'qna', 'end']);
+    },
+    function (session, results) {
+        session.userData.choice = results.response.entity;
+		
+		switch (session.userData.choice){
+			case 'wifi':
+				session.send("The Wifi credentials are ... ");
+			break;
+			
+			case 'qna':
+				session.beginDialog("/maindialog/qna");
+			break;
+			
+			case 'end':
+				session.send('Okay %s... Always glad to help!', session.userData.name);
+				session.endDialogWithResult({response: 'end'});
+				break;
+		}
+    }
+]);
 
-//var context = new AudioContext();
-//var sKey = "f8ffd733-01ce-4abf-a32f-8a4a26de79f9"; //false account
-var knowledgebaseID = "11a4bd05-95de-4e9d-9f53-558d0157d3d3"; 
-var qnaSubscriptionKey = "0055fb6f6944458695b1b633d6f9ce44";
-//var speechVoice = "de-DE, Hedda";
-
+bot.dialog('/maindialog/qna', [
+	function (session){
+		builder.Prompts.text(session, "Okay, what's your question?");
+	},
+	function (session, results) {
+		session.send("Okay let me think...");
+		sendTextToQnA(session.message.text, session);
+		//session.endDialogWithResult(results);
+		session.endDialog();
+	}
+]);
 
 function sendTextToQnA(questionText, session) {
 
@@ -59,72 +111,5 @@ function sendTextToQnA(questionText, session) {
 	if (score <= 10)
 	answer = "Leider habe ich keine Antwort auf diese Frage. Sie können sich aber an Mitarbeiter des EC wenden.";
 
-	session.send(">> %s", answer);
-
-	
-	
-	
-// function init(){       	               
-	 
-	// initiated = true;
-	
-	// client = Microsoft.CognitiveServices.SpeechRecognition.SpeechRecognitionServiceFactory.createMicrophoneClient(mode, language, sKey);
-	//[{"lexical":"hallo","display":"Hallo.","inverseNormalization":null,"maskedInverseNormalization":null,"transcript":"Hallo.","confidence":0.9383745}]
-
-	// client.onFinalResponseReceived = function (response) {
-		// var str = JSON.stringify(response);            
-		// str = str.replace("[","");
-		// str = str.replace("]","");
-		// var json = JSON.parse(str);        	
-		// setText(json.display, false);
-		
-		// var questionText = "\""+json.display+"\"";
-		
-		// sendTextToQnA(questionText);
-	// }
-// }
-				
-			// setText("("+score+") " +answer, true);					
-								
-			// $.ajax({
-				// type: "post",
-				// url: "https://api.cognitive.microsoft.com/sts/v1.0/issueToken",
-				// headers: {
-					// "Ocp-Apim-Subscription-Key" : sKey,
-					// },
-				// success: function (token){
-
-						"German - DE"; //English - GB/US  
-						"Hedda"; //DE: Hedda/Stefan  US: Zira (HQ)/Benjamin (HQ) GB: Susan/George					     						  
-					// var tsData = "<speak version='1.0' xml:lang='"+language+"'><voice xml:lang='"+language+"' xml:gender='Female' name='Microsoft Server Speech Text to Speech Voice ("+speechVoice+")'>"+answer+"</voice></speak>"
-				
-					// var ttsRequest = new XMLHttpRequest();
-					// ttsRequest.open("POST","https://speech.platform.bing.com/synthesize",true);
-					// ttsRequest.setRequestHeader("Authorization", "Bearer "+token);
-					// ttsRequest.setRequestHeader("Content-Type", "application/ssml+xml");
-					// ttsRequest.setRequestHeader("X-Microsoft-OutputFormat", "audio-16khz-32kbitrate-mono-mp3");
-					// ttsRequest.responseType = 'arraybuffer';
-												
-					// window.AudioContext = window.AudioContext||window.webkitAudioContext;
-					// var dataObj = new String(data);
-					// var buf = null;
-					// ttsRequest.onload = function(){
-						// context.decodeAudioData(ttsRequest.response, 
-							// function(buffer) {
-								// var source = context.createBufferSource();
-								// source.buffer = buffer;
-								// source.connect(context.destination);
-								// source.start(0);	
-							// },
-							// function (e){
-								// alert("decoding buffer error");
-							// }
-						// );
-					// }       						
-					// ttsRequest.send(tsData);       						   		       						        													   
-				// },
-				// error: function (e){
-					// alert("Authorization error");
-				// }
-			// });          		
+	session.send("%s (%s)", answer, score);
 }
