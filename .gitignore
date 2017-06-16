@@ -58,5 +58,5 @@ typings/
 .env
 
 #credential files
-.cred
+*.cred
 
