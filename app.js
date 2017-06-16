@@ -28,38 +28,39 @@ var bot = new builder.UniversalBot(connector);
 
 bot.dialog('/', [
 	function (session, args){
-		if (args && args.repromt){
-			builder.Prompts.text(session, 'What else can i do for you?');
-		}
-		else{
-			builder.Prompts.text(session, 'Hello... What\'s your name?');
-		}
+		builder.Prompts.text(session, 'Hello... What\'s your name?');
 	},
 	function (session, results) {
 		session.userData.name = results.response;	
 		session.beginDialog('/maindialog');
 	},
 	function (session, results) {
-		if (results == 'end') {
+		if (results && results.response == 'end') {
 			session.send("Bye!");
 			session.endConversation();
 		}
 		else{
-			session.replaceDialog('/', {repromt: true});
+			session.send("Good Bye no end!");
 		}
 	}
 ]);
 
 bot.dialog('/maindialog', [
-    function (session) {   
-        builder.Prompts.choice(session, 'Hello '+ session.userData.name + ', how may I help you?', ['wifi', 'coffee', 'qna', 'end']);
+    function (session, args, next) {   
+		if (args && args.repromt) {
+			builder.Prompts.choice(session, 'What else can i do for you,'+ session.userData.name + '?', ['wifi', 'coffee', 'qna', 'end']);
+		}
+		else {
+			builder.Prompts.choice(session, 'Hello '+ session.userData.name + ', how may I help you?', ['wifi', 'coffee', 'qna', 'end']);
+		}
     },
-    function (session, results) {
+    function (session, results, next) {
         session.userData.choice = results.response.entity;
 		
 		switch (session.userData.choice){
 			case 'wifi':
 				session.send("The Wifi credentials are ... ");
+				next();
 			break;
 			
 			case 'qna':
@@ -71,12 +72,15 @@ bot.dialog('/maindialog', [
 				session.endDialogWithResult({response: 'end'});
 				break;
 		}
-    }
+    }, 
+	function (session, results) {
+		session.replaceDialog('/maindialog', {repromt: true});
+	}
 ]);
 
 bot.dialog('/maindialog/qna', [
 	function (session){
-		builder.Prompts.text(session, "Okay, what's your question?");
+		builder.Prompts.text(session, "What's your question?");
 	},
 	function (session, results) {
 		session.send("Okay let me think...");
