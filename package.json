@@ -1,28 +1,26 @@
 {
-  "name": "botbuilder-sample-createnewconversation",
+  "name": "ECBot",
   "version": "1.0.0",
-  "description": "Bot Builder Sample - Create New Conversation",
+  "description": "Bot for Experience Center",
+  "main": "app.js",
   "scripts": {
-    "start": "node app.js"
-  },
-  "author": "Microsoft Corp.",
-  "license": "MIT",
-  "keywords": [
-    "botbuilder",
-    "bots",
-    "chatbots",
-    "botbuilder-samples"
-  ],
-  "bugs": {
-    "url": "https://github.com/Microsoft/BotBuilder-Samples/issues"
+    "test": ""
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/BotBuilder-Samples.git"
+    "url": "git+https://github.com/madingo87/ECBot.git"
   },
+  "keywords": [
+    "botframework"
+  ],
+  "author": "PwC",
+  "license": "none",
+  "bugs": {
+    "url": "https://github.com/madingo87/ECBot/issues"
+  },
+  "homepage": "https://github.com/madingo87/ECBot/wiki",
   "dependencies": {
-    "botbuilder": "^3.7.0",
-    "restify": "^4.3.0",
-    "dotenv-extended": "^1.0.4"
+    "botbuilder": "^3.6.0",
+    "restify": "^4.3.0"
   }
 }
