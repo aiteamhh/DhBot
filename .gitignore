@@ -60,3 +60,6 @@ typings/
 # credential files
 *.cred
 
+# node_modules only for localhost
+/node_modules
+
