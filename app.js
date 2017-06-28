@@ -1,8 +1,8 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 
-var knowledgebaseID = "11a4bd05-95de-4e9d-9f53-558d0157d3d3"; 
-var qnaSubscriptionKey = "0055fb6f6944458695b1b633d6f9ce44";
+var knowledgebaseID = "01b6a3f1-0071-4e25-8c65-ff304a5b0136"; 
+var qnaSubscriptionKey = "6c374f8c7eea4405afa0cd80e496c6e2";
 
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
@@ -14,6 +14,12 @@ var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
+
+//selectionList
+var go = 'I have another question';
+var end = 'No, thanks';
+var Options = [go, end];
+var listStyle = { listStyle: builder.ListStyle.button };
 
 // Serve a static web page
 server.get(/.*/, restify.serveStatic({
@@ -41,60 +47,45 @@ bot.dialog('/', [
 		session.beginDialog('/maindialog');
 	},
 	function (session, results) {
-		if (results && results.response == 'end') {
-			session.send("Bye!");
-			session.endConversation();
-		}
-		else{
-			session.send("Good Bye no end!");
-		}
+		session.send("Goodbye!");
+		session.endConversation();
 	}
 ]);
 
 bot.dialog('/maindialog', [
     function (session, args, next) {   
 		if (args && args.repromt) {
-			builder.Prompts.choice(session, 'What else can i do for you,'+ session.userData.name + '?', ['wifi', 'coffee', 'qna', 'end']);
+			builder.Prompts.text(session, 'Okay! what else do you want to know,'+ session.userData.name + '?');
 		}
 		else {
-			builder.Prompts.choice(session, 'Hello '+ session.userData.name + ', how may I help you?', ['wifi', 'coffee', 'qna', 'end']);
+			builder.Prompts.text(session, 'Hello '+ session.userData.name + ', what question do you have?');
 		}
     },
     function (session, results, next) {
+		session.send("Okay let me think...");
+		sendTextToQnA(session.message.text, session);
+		next();	
+	},
+	function (session, results, next) {
+		builder.Prompts.choice(session, 'Do you want to ask something else?', Options, listStyle);
+	},
+	function (session, results, netxt) {
         session.userData.choice = results.response.entity;
 		
 		switch (session.userData.choice){
-			case 'wifi':
-				session.send("The Wifi credentials are ... ");
-				next();
+			case go:
+				session.replaceDialog('/maindialog', {repromt: true});
+				//next();
 			break;
 			
-			case 'qna':
-				session.beginDialog("/maindialog/qna");
-			break;
-			
-			case 'end':
+			case end:
 				session.send('Okay %s... Always glad to help!', session.userData.name);
-				session.endDialogWithResult({response: 'end'});
+				session.endDialog();
 				break;
 		}
-    }, 
-	function (session, results) {
-		session.replaceDialog('/maindialog', {repromt: true});
 	}
 ]);
 
-bot.dialog('/maindialog/qna', [
-	function (session){
-		builder.Prompts.text(session, "What's your question?");
-	},
-	function (session, results) {
-		session.send("Okay let me think...");
-		sendTextToQnA(session.message.text, session);
-		//session.endDialogWithResult(results);
-		session.endDialog();
-	}
-]);
 
 function sendTextToQnA(questionText, session) {
 
@@ -116,10 +107,14 @@ function sendTextToQnA(questionText, session) {
 	var answer = response.answers[0].answer;
 	var score = response.answers[0].score;
 
-	if (score < 50 && score > 10)
-	answer = "Ich bin mir nicht sicher, ob ich die Frage verstanden habe!";
-	if (score <= 10)
-	answer = "Leider habe ich keine Antwort auf diese Frage. Sie können sich aber an Mitarbeiter des EC wenden.";
+	if (score < 60 && score > 30)
+	answer += "\nBut i'm not sure i got the question right!";
+	if (score <= 30)
+	answer = "Unfortunately i have no answer to this";
+
+	if (answer.indexOf("Data not available") > -1) {
+		answer = "Sorry, there is no data available for this question";
+	}
 
 	session.send("%s (%s)", answer, score);
 }
