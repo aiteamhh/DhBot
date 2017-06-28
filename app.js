@@ -55,15 +55,14 @@ bot.dialog('/', [
 bot.dialog('/maindialog', [
     function (session, args, next) {   
 		if (args && args.repromt) {
-			builder.Prompts.text(session, 'Okay! what else do you want to know,'+ session.userData.name + '?');
+			builder.Prompts.text(session, 'Okay! what else do you want to know, '+ session.userData.name + '?');
 		}
 		else {
 			builder.Prompts.text(session, 'Hello '+ session.userData.name + ', what question do you have?');
 		}
     },
     function (session, results, next) {
-		session.send("Okay let me think...");
-		sendTextToQnA(session.message.text, session);
+		sendTextToQnA(results.response, session);
 		next();	
 	},
 	function (session, results, next) {
@@ -95,6 +94,9 @@ function sendTextToQnA(questionText, session) {
 		question : questionText, 
 		top : 2               		
 	};
+	
+	//=============
+	session.send(questionText); 
 		
 	http.open('POST',url,false);
 	http.setRequestHeader("Content-Type", "application/json");
@@ -102,15 +104,17 @@ function sendTextToQnA(questionText, session) {
 	
 	http.send(JSON.stringify(params));
 	
-	//session.send(http.responseText);
-	var response = JSON.parse(http.responseText); //{"answers":[{"answer":"Wilkommen beim Bewerbungs-FAQ von PwC :)","score":100}]}
+	//=============
+	session.send(http.responseText);
+	var response = JSON.parse(http.responseText); 
+
 	var answer = response.answers[0].answer;
 	var score = response.answers[0].score;
-
-	if (score < 60 && score > 30)
-	answer += "\nBut i'm not sure i got the question right!";
-	if (score <= 30)
-	answer = "Unfortunately i have no answer to this";
+	
+	// if (score < 60 && score > 30)
+	// answer += "\nBut i'm not sure i got the question right!";
+	// if (score <= 30)
+	// answer = "Unfortunately i have no answer to this";
 
 	if (answer.indexOf("Data not available") > -1) {
 		answer = "Sorry, there is no data available for this question";
