@@ -94,18 +94,12 @@ function sendTextToQnA(questionText, session) {
 		question : questionText, 
 		top : 2               		
 	};
-	
-	//=============
-	session.send(questionText); 
 		
 	http.open('POST',url,false);
 	http.setRequestHeader("Content-Type", "application/json");
-	http.setRequestHeader("Ocp-Apim-Subscription-Key", qnaSubscriptionKey);
-	
+	http.setRequestHeader("Ocp-Apim-Subscription-Key", qnaSubscriptionKey);	
 	http.send(JSON.stringify(params));
 	
-	//=============
-	session.send(http.responseText);
 	var response = JSON.parse(http.responseText); 
 
 	var answer = response.answers[0].answer;
