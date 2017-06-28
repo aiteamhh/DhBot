@@ -1,14 +1,14 @@
 {
-  "name": "ECBot",
+  "name": "DhBot",
   "version": "1.0.0",
-  "description": "Bot for Experience Center",
+  "description": "Helper Bot for Daimler",
   "main": "app.js",
   "scripts": {
     "test": ""
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/madingo87/ECBot.git"
+    "url": "git+https://github.com/madingo87/DhBot.git"
   },
   "keywords": [
     "botframework"
@@ -16,9 +16,9 @@
   "author": "PwC",
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/madingo87/ECBot/issues"
+    "url": "https://github.com/madingo87/DhBot/issues"
   },
-  "homepage": "https://github.com/madingo87/ECBot/wiki",
+  "homepage": "https://github.com/madingo87/DhBot/wiki",
   "dependencies": {
     "botbuilder": "^3.6.0",
     "restify": "^4.3.0"
